@@ -78,7 +78,7 @@ const makeXs75WorkAround = stream => {
 
   stream.on('drain', drain)
 
-  return new Writable({
+  const cacheStream = new Writable({
     write (chunk, encoding, callback) {
       if (canContinue) {
         if (Math.random() < 1e-2) {
@@ -93,6 +93,10 @@ const makeXs75WorkAround = stream => {
       }
     },
   })
+
+  cacheStream.readAll = stream.readAll.bind(cacheStream)
+
+  return cacheStream
 }
 
 // ===================================================================
