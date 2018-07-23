@@ -6,6 +6,7 @@ import httpRequest from 'http-request-plus'
 import { BaseError } from 'make-error'
 import { EventEmitter } from 'events'
 import { fibonacci } from 'iterable-backoff'
+import { Writable } from 'stream'
 import {
   filter,
   forEach,
@@ -33,6 +34,66 @@ import {
 import autoTransport from './transports/auto'
 
 const debug = createDebug('xen-api')
+
+// ===================================================================
+// XS 7.5 export bug workaroun
+
+function Queue () {
+  this._s1 = [] // stack to push to
+  this._s2 = [] // stack to pop from
+}
+
+Queue.prototype.push = function (value) {
+  this._s1.push(value)
+}
+
+Queue.prototype.pop = function () {
+  let s2 = this._s2
+  if (s2.length === 0) {
+    const s1 = this._s1
+    if (s1.length === 0) {
+      return
+    }
+    this._s1 = s2
+    s2 = this._s2 = s1.reverse()
+  }
+  return s2.pop()
+}
+
+const makeXs75WorkAround = stream => {
+  const cache = new Queue()
+  let canContinue = true
+
+  const drain = () => {
+    const next = cache.pop()
+    if (next === undefined) {
+      canContinue = true
+      return
+    }
+    const { chunk, encoding } = next
+    if (stream.write(chunk, encoding)) {
+      drain()
+    }
+  }
+
+  stream.on('drain', drain)
+
+  return new Writable({
+    write (chunk, encoding, callback) {
+      if (canContinue) {
+        if (Math.random() < 1e-2) {
+        }
+        canContinue = stream.write(chunk, encoding)
+        callback()
+      } else {
+        cache.push({ chunk, encoding })
+
+        // wait AMAP without breaking the export
+        setTimeout(callback, 1e2)
+      }
+    },
+  })
+}
 
 // ===================================================================
 
@@ -524,7 +585,7 @@ export class Xapi extends EventEmitter {
           })
         }
 
-        return promise
+        return makeXs75WorkAround(promise)
       }
     )
   }
