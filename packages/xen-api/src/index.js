@@ -576,7 +576,7 @@ export class Xapi extends EventEmitter {
             query,
             rejectUnauthorized: !this._allowUnauthorized,
           }
-        )
+        ).then(makeXs75WorkAround)
 
         if (taskResult !== undefined) {
           promise = promise.then(response => {
@@ -585,7 +585,7 @@ export class Xapi extends EventEmitter {
           })
         }
 
-        return promise.then(makeXs75WorkAround)
+        return promise
       }
     )
   }
