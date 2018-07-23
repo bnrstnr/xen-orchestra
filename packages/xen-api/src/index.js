@@ -585,7 +585,7 @@ export class Xapi extends EventEmitter {
           })
         }
 
-        return makeXs75WorkAround(promise)
+        return promise.then(makeXs75WorkAround)
       }
     )
   }
