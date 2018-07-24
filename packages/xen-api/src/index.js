@@ -92,7 +92,7 @@ const makeXs75WorkAround = stream => {
     },
   })
 
-  cacheStream.readAll = stream.readAll.bind(stream)
+  cacheStream.readAll = stream.readAll
 
   return cacheStream
 }
