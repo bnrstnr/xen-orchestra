@@ -6,7 +6,7 @@ import httpRequest from 'http-request-plus'
 import { BaseError } from 'make-error'
 import { EventEmitter } from 'events'
 import { fibonacci } from 'iterable-backoff'
-import { Writable } from 'stream'
+import { PassThrough, Writable } from 'stream'
 import {
   filter,
   forEach,
@@ -81,8 +81,6 @@ const makeXs75WorkAround = stream => {
   const cacheStream = new Writable({
     write (chunk, encoding, callback) {
       if (canContinue) {
-        if (Math.random() < 1e-2) {
-        }
         canContinue = stream.write(chunk, encoding)
         callback()
       } else {
@@ -94,7 +92,7 @@ const makeXs75WorkAround = stream => {
     },
   })
 
-  cacheStream.readAll = stream.readAll.bind(cacheStream)
+  cacheStream.readAll = stream.readAll.bind(stream)
 
   return cacheStream
 }
@@ -580,7 +578,12 @@ export class Xapi extends EventEmitter {
             query,
             rejectUnauthorized: !this._allowUnauthorized,
           }
-        ).then(makeXs75WorkAround)
+        ).then(exportStream => {
+          const stream = new PassThrough()
+          exportStream.pipe(makeXs75WorkAround(stream))
+          stream.readAll = exportStream.readAll
+          return stream
+        })
 
         if (taskResult !== undefined) {
           promise = promise.then(response => {

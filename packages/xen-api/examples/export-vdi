@@ -102,12 +102,9 @@ defer(async ($defer, args) => {
 
     stream.on('drain', drain)
 
-    return new Writable({
+    const cacheStream = new Writable({
       write (chunk, encoding, callback) {
         if (canContinue) {
-          if (Math.random() < 1e-2) {
-            process.stdout.write('.')
-          }
           canContinue = stream.write(chunk, encoding)
           callback()
         } else {
@@ -117,33 +114,23 @@ defer(async ($defer, args) => {
           // wait AMAP without breaking the export
           setTimeout(callback, 1e2)
         }
-      }
+      },
     })
+
+    // cacheStream.readAll = stream.readAll.bind(stream)
+
+    return cacheStream
   }
 
   // IMPORT --------------------------------------------------------------------
   let n = 0
-  // await exportStream.pipe(
-  //   makeXs75WorkAround(new Writable({
-  //     // highWaterMark: 0,
-  //     write (chunk, encoding, callback) {
-  //       n += chunk.length
-  //       if (Math.random() < 0.0001) {
-  //         console.log(n / 2 ** 30)
-  //         setTimeout(callback, 5000)
-  //       } else {
-  //         callback()
-  //       }
-  //     }
-  //   }))
-  // )
   await Promise.all([
     // exportStream.task,
     fromCallback(cb =>
       pump(
         exportStream,
         makeXs75WorkAround(new Writable({
-          highWaterMark: 16384,
+          highWaterMark: 0,
           write (chunk, encoding, callback) {
             n += chunk.length
             if (Math.random() < 0.0001) {
