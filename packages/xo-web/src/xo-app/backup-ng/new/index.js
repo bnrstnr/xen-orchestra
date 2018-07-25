@@ -129,12 +129,13 @@ const getInitialState = () => ({
   $pool: {},
   backupMode: false,
   compression: true,
-  concurrency: 0,
+  concurrency: undefined,
   crMode: false,
   deltaMode: false,
   drMode: false,
   editionMode: undefined,
   formId: generateRandomId(),
+  inputConcurrencyId: generateRandomId(),
   inputTimeoutId: generateRandomId(),
   name: '',
   offlineSnapshot: false,
@@ -265,15 +266,16 @@ export default [
         )
 
         const globalSettings = props.job.settings['']
+        const { concurrency = globalSettings.concurrency, timeout } = state
         settings[''] = {
           ...globalSettings,
           reportWhen: state.reportWhen,
-          concurrency: state.concurrency,
+          concurrency: state.concurrency === '' ? undefined : concurrency,
           offlineSnapshot: state.offlineSnapshot,
           timeout:
-            state.timeout === ''
+            timeout === ''
               ? undefined
-              : state.timeout * 1e3 || globalSettings.timeout,
+              : timeout * 1e3 || globalSettings.timeout,
         }
 
         await editBackupNgJob({
@@ -357,8 +359,7 @@ export default [
         const remotes =
           job.remotes !== undefined ? destructPattern(job.remotes) : []
         const srs = job.srs !== undefined ? destructPattern(job.srs) : []
-        const { concurrency, reportWhen, offlineSnapshot } =
-          job.settings[''] || {}
+        const { reportWhen, offlineSnapshot } = job.settings[''] || {}
         const settings = cloneDeep(job.settings)
         delete settings['']
         const drMode = job.mode === 'full' && !isEmpty(srs)
@@ -385,7 +386,6 @@ export default [
           remotes,
           srs,
           reportWhen: reportWhen || 'failure',
-          concurrency: concurrency || 0,
           offlineSnapshot,
           settings,
           schedules,
@@ -526,9 +526,9 @@ export default [
         ...state,
         reportWhen: value,
       }),
-      setConcurrency: (_, concurrency) => state => ({
-        ...state,
-        concurrency,
+      setConcurrency: (_, concurrency) => (_, { job }) => ({
+        concurrency:
+          concurrency === undefined && job !== undefined ? '' : concurrency,
       }),
       setTimeout: (_, timeout) => (_, { job }) => ({
         timeout: timeout === undefined && job !== undefined ? '' : timeout,
@@ -583,7 +583,8 @@ export default [
   }),
   injectState,
   ({ state, effects, remotesById, job }) => {
-    const { timeout: jobTimeout } = get(() => job.settings['']) || {}
+    const { concurrency: jobConcurrency, timeout: jobTimeout } =
+      get(() => job.settings['']) || {}
 
     if (state.needUpdateParams) {
       effects.updateParams()
@@ -843,14 +844,13 @@ export default [
                     />
                   </FormGroup>
                   <FormGroup>
-                    <label>
+                    <label htmlFor={state.inputConcurrencyId}>
                       <strong>{_('concurrency')}</strong>
                     </label>
                     <Number
-                      min='0'
+                      id={state.inputConcurrencyId}
                       onChange={effects.setConcurrency}
-                      required
-                      value={state.concurrency}
+                      value={defined(state.concurrency, jobConcurrency)}
                     />
                   </FormGroup>
                   <FormGroup>
