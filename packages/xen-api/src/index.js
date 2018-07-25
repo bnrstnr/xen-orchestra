@@ -77,7 +77,7 @@ const makeXs75WorkAround = stream => {
       return
     }
     const { chunk, encoding } = next
-    process.stdout.write('*')
+    // process.stdout.write('*')
     if (stream.write(chunk, encoding)) {
       drain()
     }
@@ -89,25 +89,26 @@ const makeXs75WorkAround = stream => {
     final (callback) {
       callback()
       if (canContinue) {
-        console.log('Can end directly')
+        // console.log('Can end directly')
         stream.end()
       } else {
-        console.log('Need to wait for drain')
+        // console.log('Need to wait for drain')
         // We need to empty the queue before calling stream.end
         finished = true
       }
     },
     write (chunk, encoding, callback) {
       if (canContinue) {
-        process.stdout.write('.')
+        // process.stdout.write('.')
         canContinue = stream.write(chunk, encoding)
         callback()
       } else {
-        process.stdout.write('>')
+        // process.stdout.write('>')
         cache.push({ chunk, encoding })
 
         // wait AMAP without breaking the export
-        setTimeout(callback, 1e2)
+        // setTimeout(callback, 1e2)
+        process.nextTick(callback)
       }
     },
   })
