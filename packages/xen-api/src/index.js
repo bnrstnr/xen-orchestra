@@ -86,11 +86,8 @@ const makeXs75WorkAround = stream => {
   stream.on('drain', drain)
 
   const cacheStream = new Writable({
-    final (error) {
-      console.log('final', error)
-      if (error !== undefined) {
-        throw error
-      }
+    final (callback) {
+      callback()
       if (canContinue) {
         console.log('Can end directly')
         stream.end()
