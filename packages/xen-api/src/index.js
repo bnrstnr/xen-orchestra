@@ -36,7 +36,7 @@ import autoTransport from './transports/auto'
 const debug = createDebug('xen-api')
 
 // ===================================================================
-// XS 7.5 export bug workaroun
+// XS 7.5 export bug workaround
 
 function Queue () {
   this._s1 = [] // stack to push to
@@ -63,14 +63,21 @@ Queue.prototype.pop = function () {
 const makeXs75WorkAround = stream => {
   const cache = new Queue()
   let canContinue = true
+  let finished = false
 
   const drain = () => {
     const next = cache.pop()
     if (next === undefined) {
-      canContinue = true
+      if (finished) {
+        console.log('Ending stream after drain')
+        stream.end()
+      } else {
+        canContinue = true
+      }
       return
     }
     const { chunk, encoding } = next
+    process.stdout.write('*')
     if (stream.write(chunk, encoding)) {
       drain()
     }
@@ -79,11 +86,27 @@ const makeXs75WorkAround = stream => {
   stream.on('drain', drain)
 
   const cacheStream = new Writable({
+    final (error) {
+      console.log('final', error)
+      if (error !== undefined) {
+        throw error
+      }
+      if (canContinue) {
+        console.log('Can end directly')
+        stream.end()
+      } else {
+        console.log('Need to wait for drain')
+        // We need to empty the queue before calling stream.end
+        finished = true
+      }
+    },
     write (chunk, encoding, callback) {
       if (canContinue) {
+        process.stdout.write('.')
         canContinue = stream.write(chunk, encoding)
         callback()
       } else {
+        process.stdout.write('>')
         cache.push({ chunk, encoding })
 
         // wait AMAP without breaking the export
