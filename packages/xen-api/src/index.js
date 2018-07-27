@@ -114,7 +114,10 @@ const makeXs75WorkAround = stream => {
           chunk,
           encoding,
           callback,
-          timeout: setTimeout(callback, 1e2),
+          timeout: setTimeout(
+            cache._s1.length + cache._s2.length > 200 ? () => {} : callback,
+            1e2
+          ),
         })
       }
     },
