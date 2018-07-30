@@ -15,7 +15,6 @@ import {
   isObject,
   map,
   noop,
-  omit,
   reduce,
   startsWith,
 } from 'lodash'
@@ -674,8 +673,7 @@ export class Xapi extends EventEmitter {
           ? doRequest({
               body: '',
 
-              // omit task_id because this request will fail on purpose
-              query: 'task_id' in query ? omit(query, 'task_id') : query,
+              query,
 
               maxRedirects: 0,
             }).then(
