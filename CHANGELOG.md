@@ -6,8 +6,11 @@
 
 ### Bug fixes
 
+- The restore of a VM on a local SR stuck [#3245](https://github.com/vatesfr/xen-orchestra/issues/3245) (PR [#3243](https://github.com/vatesfr/xen-orchestra/pull/3243))
+
 ### Released packages
 
+- xen-api v0.17.0
 - xo-server v5.24.0
 - xo-web v5.24.0
 
