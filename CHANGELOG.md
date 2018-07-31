@@ -6,6 +6,8 @@
 
 ### Bug fixes
 
+- [Backup NG] A successful backup job reported as Interrupted [#3018](https://github.com/vatesfr/xen-orchestra/issues/3018) (PR [#3238](https://github.com/vatesfr/xen-orchestra/pull/3238))
+
 ### Released packages
 
 - xo-server v5.24.0
