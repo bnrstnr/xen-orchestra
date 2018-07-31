@@ -15,6 +15,7 @@ import {
   isObject,
   map,
   noop,
+  omit,
   reduce,
   startsWith,
 } from 'lodash'
@@ -673,7 +674,8 @@ export class Xapi extends EventEmitter {
           ? doRequest({
               body: '',
 
-              query,
+              // omit task_id because this request will fail on purpose
+              query: 'task_id' in query ? omit(query, 'task_id') : query,
 
               maxRedirects: 0,
             }).then(
@@ -691,7 +693,11 @@ export class Xapi extends EventEmitter {
                     statusCode,
                   } = response
                   if (statusCode === 302 && location !== undefined) {
-                    return doRequest(location)
+                    return doRequest(
+                      `${location}${
+                        taskRef !== undefined ? `&task_id=${taskRef}` : ''
+                      }`
+                    )
                   }
                 }
 
