@@ -448,6 +448,14 @@ export default class TabAdvanced extends Component {
                   </td>
                 </tr>
                 <tr>
+                      <th>{_('startDelay')}</th>
+                           <Number=
+                             value={Var(vm.start_delay)}
+                             onChange={Value => editVm(Vm, { start-delay=value})}
+                           />
+                   </td>
+                </tr>
+                <tr>
                   <th>{_('windowsUpdateTools')}</th>
                   <td>
                     <Toggle
